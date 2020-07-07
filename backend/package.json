@@ -1,0 +1,39 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "bin": {
+    "backend": "bin/backend.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "buildlambdas": "npm-recursive-install --rootDir=src --production",
+    "cdkdeploy": "cdk deploy * --outputs-file ../frontend/src/outputs.json",
+    "deploy": "npm run buildlambdas && npm run build && npm run cdkdeploy"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "^1.49.1",
+    "@types/jest": "^25.2.1",
+    "@types/node": "10.17.5",
+    "aws-cdk": "1.47.0",
+    "aws-sdk": "^2.709.0",
+    "jest": "^25.5.0",
+    "recursive-install": "^1.4.0",
+    "ts-jest": "^25.3.1",
+    "ts-node": "^8.1.0",
+    "typescript": "~3.7.2"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-apigatewayv2": "^1.49.1",
+    "@aws-cdk/aws-cloudfront": "^1.49.1",
+    "@aws-cdk/aws-cognito": "^1.49.1",
+    "@aws-cdk/aws-dynamodb": "^1.49.1",
+    "@aws-cdk/aws-s3": "^1.49.1",
+    "@aws-cdk/aws-ssm": "^1.49.1",
+    "@aws-cdk/core": "^1.49.1",
+    "dynamodb-toolbox": "^0.2.0-alpha",
+    "source-map-support": "^0.5.16"
+  }
+}

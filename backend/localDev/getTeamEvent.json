@@ -1,0 +1,14 @@
+{
+    "pathParameters": {
+        "teamId": "ced57aa2-f981-4b78-a819-07651ec62707"
+    },
+    "requestContext": {
+        "authorizer": {
+            "jwt": {
+                "claims": {
+                    "username": "405b6757-2184-46e4-a2cb-a0fc19b4f8cf"
+                }
+            }
+        }
+    }
+}

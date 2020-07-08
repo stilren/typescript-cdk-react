@@ -84,16 +84,6 @@ function provisionLambdas(stack: Construct, lambdas: ILambda[], table: Table, ht
           `arn:aws:cognito-idp:${userPool.stack.region}:${userPool.stack.account}:userpool/${userPool.userPoolId}`,
         ],
       }))
-      handler.addToRolePolicy(
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'cognito-idp:AdminUpdateUserAttributes',
-          ],
-          resources: [
-            `arn:aws:cognito-idp:${userPool.stack.region}:${userPool.stack.account}:userpool/${userPool.userPoolId}`,
-          ],
-        }))
     table.grantReadWriteData(handler);
     const routes = httpApi.addRoutes({
       integration: new apigateway.LambdaProxyIntegration({ handler: handler }),

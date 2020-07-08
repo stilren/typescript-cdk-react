@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "uuid": "^8.2.0",
-    "teamsRepo": "file:../teamsRepo"
+    "teamsRepo": "file:../teamsRepo",
+    "userRepo": "file:../../userRepo"
   }
 }

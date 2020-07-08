@@ -1,0 +1,8 @@
+{
+    "name": "userrepo",
+    "version": "1.0.0",
+    "description": "",
+    "main": "userRepo.js",
+    "author": "",
+    "license": "ISC"
+}

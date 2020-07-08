@@ -7,7 +7,7 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as cloudfront from '@aws-cdk/aws-cloudfront'
 import { HttpMethod, HttpApi, CfnAuthorizer, CfnRoute } from '@aws-cdk/aws-apigatewayv2';
 import { Construct } from '@aws-cdk/core';
-import { UserPool } from '@aws-cdk/aws-cognito';
+import { UserPool, IUserPool } from '@aws-cdk/aws-cognito';
 import { Table, AttributeType, ProjectionType } from '@aws-cdk/aws-dynamodb';
 import * as ssm from "@aws-cdk/aws-ssm"
 
@@ -23,30 +23,34 @@ const indexName = "userid-index"
 export class BackendStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+    const userPool = getUserPool(this);
     addWebsite(this, "MyWebsite")
     const httpApi = addHttpApi(this, 'HttpProxyApi')
     const table = addDynamoTableWithGsi(this, "AppTable")
-    const authorizer = addAuthorizer(this, httpApi)
+    const authorizer = addAuthorizer(this, httpApi, userPool)
     const lambdas: ILambda[] = [
       { name: "createTeam", resources: "src/teams", verb: apigateway.HttpMethod.POST, route: "/team", protected: true },
       { name: "getTeams", resources: "src/teams", verb: apigateway.HttpMethod.GET, route: "/team", protected: true },
-      { name: "getTeam", resources:"src/teams", verb: apigateway.HttpMethod.GET, route: "/team/{teamId}", protected: true },
+      { name: "getTeam", resources: "src/teams", verb: apigateway.HttpMethod.GET, route: "/team/{teamId}", protected: true },
     ]
-    provisionLambdas(this, lambdas, table, httpApi, authorizer);
+    provisionLambdas(this, lambdas, table, httpApi, authorizer, userPool);
     new cdk.CfnOutput(this, "REGION", { value: cdk.Aws.REGION })
   }
 }
 
-function addAuthorizer(stack: Construct, httpApi: HttpApi): CfnAuthorizer {
+function getUserPool(stack: Construct) {
   const userPoolArn = ssm.StringParameter.fromStringParameterAttributes(stack, 'MyValue', {
     parameterName: 'UserPoolArn',
   }).stringValue;
+  return UserPool.fromUserPoolArn(stack, "myuserpool", userPoolArn)
+}
+
+function addAuthorizer(stack: Construct, httpApi: HttpApi, userPool: IUserPool): CfnAuthorizer {
   const userPoolClientId = ssm.StringParameter.fromStringParameterAttributes(stack, 'UserPoolClientId', {
     parameterName: 'UserPoolClientId',
   }).stringValue;
-  const userPool = UserPool.fromUserPoolArn(stack, "myuserpool", userPoolArn)
   return new apigateway.CfnAuthorizer(stack, "MyAuthorizer", {
-    name:"MyAuthorizer",
+    name: "MyAuthorizer",
     identitySource: ['$request.header.Authorization'],
     apiId: httpApi.httpApiId,
     authorizerType: "JWT",
@@ -57,7 +61,7 @@ function addAuthorizer(stack: Construct, httpApi: HttpApi): CfnAuthorizer {
   })
 }
 
-function provisionLambdas(stack: Construct, lambdas: ILambda[], table: Table, httpApi: HttpApi, authorizer: CfnAuthorizer) {
+function provisionLambdas(stack: Construct, lambdas: ILambda[], table: Table, httpApi: HttpApi, authorizer: CfnAuthorizer, userPool: IUserPool) {
   lambdas.forEach(l => {
     const handler = new lambda.Function(stack, l.name, {
       code: new lambda.AssetCode(`${l.resources}/${l.name}`),
@@ -65,21 +69,42 @@ function provisionLambdas(stack: Construct, lambdas: ILambda[], table: Table, ht
       runtime: lambda.Runtime.NODEJS_10_X,
       environment: {
         TABLE_NAME: table.tableName,
-        INDEX_NAME: indexName
-      },
+        INDEX_NAME: indexName,
+        USER_POOL_ID: userPool.userPoolId
+      }
     });
+    handler.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'cognito-idp:AdminUpdateUserAttributes',
+        ],
+        resources: [
+          `arn:aws:cognito-idp:${userPool.stack.region}:${userPool.stack.account}:userpool/${userPool.userPoolId}`,
+        ],
+      }))
+      handler.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'cognito-idp:AdminUpdateUserAttributes',
+          ],
+          resources: [
+            `arn:aws:cognito-idp:${userPool.stack.region}:${userPool.stack.account}:userpool/${userPool.userPoolId}`,
+          ],
+        }))
     table.grantReadWriteData(handler);
     const routes = httpApi.addRoutes({
       integration: new apigateway.LambdaProxyIntegration({ handler: handler }),
       path: l.route,
       methods: [l.verb],
     })
-    if(l.protected) {
+    if (l.protected) {
       routes.forEach(r => {
-          const routeCfn  = r.node.defaultChild as CfnRoute;
-          routeCfn.authorizerId = authorizer.ref
-          routeCfn.authorizationType = "JWT"
-      })  
+        const routeCfn = r.node.defaultChild as CfnRoute;
+        routeCfn.authorizerId = authorizer.ref
+        routeCfn.authorizationType = "JWT"
+      })
     }
   })
 }

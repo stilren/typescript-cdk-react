@@ -1,14 +1,11 @@
 import { GetTeam } from "teamsRepo";
-import { CognitoIdentity } from 'aws-sdk';
-const db = new CognitoIdentity({ apiVersion: '2012-08-10' });
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { GetUserInfo } from "../../userRepo/userRepo";
 
-export const handler = async (event: any = {}) : Promise <any> => {
-  const userId = event['requestContext']['authorizer']['jwt']['claims']['username']
-  const teamId = event.pathParameters.teamId;
-  if ( !userId) {
-    return { statusCode: 400, body: `Error: You are missing parameters/user info` };
-  }
-
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+  const { teams } = await GetUserInfo(event);
+  const teamId = event.pathParameters!.teamId;
+  if (!teams.includes(teamId)) return { statusCode: 403, body: `User has no access to this team` };
   try {
     const teams = await GetTeam(teamId)
     return { statusCode: 200, body: JSON.stringify(teams) };
@@ -16,4 +13,3 @@ export const handler = async (event: any = {}) : Promise <any> => {
     return { statusCode: 500, body: JSON.stringify(dbError) };
   }
 };
-  

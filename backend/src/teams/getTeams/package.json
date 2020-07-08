@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "teamsRepo": "file:../teamsRepo"
+    "teamsRepo": "file:../teamsRepo",
+    "userRepo": "file:../../userRepo"
   }
 }

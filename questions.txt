@@ -1,0 +1,2 @@
+https://forums.aws.amazon.com/thread.jspa?messageID=948722&#948722
+https://stackoverflow.com/questions/62781779/aws-cognito-how-to-authorize-a-user-in-a-serverless-stack-using-custom-attribut

@@ -71,7 +71,8 @@ function provisionLambdas(stack: Construct, lambdas: ILambda[], table: Table, ht
         TABLE_NAME: table.tableName,
         INDEX_NAME: indexName,
         USER_POOL_ID: userPool.userPoolId
-      }
+      },
+      tracing: lambda.Tracing.ACTIVE
     });
     handler.addToRolePolicy(
       new iam.PolicyStatement({
@@ -191,7 +192,7 @@ function addHttpApi(stack: cdk.Construct, name: string): HttpApi {
       ],
       allowOrigins: ['*'],
       maxAge: cdk.Duration.days(10)
-    }
+    },
   });
   new cdk.CfnOutput(stack, "GATEWAY_URL", { value: httpApi.url! })
   return httpApi

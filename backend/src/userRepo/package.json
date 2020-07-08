@@ -4,5 +4,8 @@
     "description": "",
     "main": "userRepo.js",
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "dependencies": {
+        "aws-xray-sdk": "^3.1.0"
+    }
 }

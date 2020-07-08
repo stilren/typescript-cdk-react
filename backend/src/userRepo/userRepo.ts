@@ -1,8 +1,9 @@
 import { APIGatewayProxyHandlerV2, APIGatewayProxyEventV2 } from "aws-lambda"
-import { CognitoIdentityServiceProvider } from "aws-sdk";
 import { GetUserResponse } from "aws-sdk/clients/cognitoidentityserviceprovider";
-const cognito = new CognitoIdentityServiceProvider()
 const USER_POOL_ID = process.env.USER_POOL_ID || '';
+const AWSXRay = require('aws-xray-sdk');
+const AWS = AWSXRay.captureAWS(require('aws-sdk'));
+const cognito = new AWS.CognitoIdentityServiceProvider()
 
 export async function GetUserInfo(event: APIGatewayProxyEventV2) {
   const authToken = event.headers['authorization'].split('Bearer ')[1]
